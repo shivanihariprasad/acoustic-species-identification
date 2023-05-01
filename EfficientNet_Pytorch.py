@@ -2,18 +2,22 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
-import os
-from efficientnet_pytorch import EfficientNet
+#from efficientnet_pytorch import EfficientNet
 import torchvision.models as models
 from tqdm import tqdm
 import torch.nn as nn
 import torch.optim as optim 
+from sklearn.metrics import confusion_matrix
+import pandas as pd
+import seaborn as sn
+import matplotlib.pyplot as plt
 
 #model = EfficientNet.from_name('efficientnet-b1', num_classes=29)
 model = models.efficientnet_b0(pretrained=True)
 device = 'cpu'
 batch_size = 100
 num_classes = 205
+num_epochs = 20
 
 def train():
     # the training transforms
@@ -39,7 +43,10 @@ def train():
     
     train_dataset = torchvision.datasets.ImageFolder(root='SPLITIMAGES/train', transform=train_transform)
     valid_dataset = torchvision.datasets.ImageFolder(root='SPLITIMAGES/val', transform=valid_transform)
-
+    #print("Train dataset\n", train_dataset.class_to_idx)
+    #print("Valid dataset\n", valid_dataset.class_to_idx)
+    classes = list(train_dataset.class_to_idx.keys())
+    classes.sort()
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
     valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
@@ -47,12 +54,6 @@ def train():
     #image_datasets = torchvision.datasets.ImageFolder(data_dir, train_transform)
     #train_size = int(0.8 * len(image_datasets))
     #val_size = len(image_datasets) - train_size
-    #train_size = 4758
-    train_size = 43417
-    #val_size = 1204
-    val_size = 10951
-    print("Val size: ", val_size)
-    print("Train size:", train_size)
     #train_dataset, val_dataset = torch.utils.data.random_split(image_datasets, [train_size, val_size])
 
     #train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=25, shuffle=True, num_workers=7)
@@ -63,7 +64,7 @@ def train():
         param.requires_grad = False
 
     num_inputs = model.classifier[1].in_features
-    print("Num inputs:", num_inputs)
+
     model.classifier = nn.Sequential(
         nn.Linear(num_inputs, 2048),
         nn.SiLU(), # Sigmoid Weighted Linear Unit
@@ -84,26 +85,27 @@ def train():
     loss_func = nn.CrossEntropyLoss()
 
     # Train the model
-    for epoch in range(10):
-        print('Epoch {}/{}'.format(epoch + 1, 20))
-        print('-' * 10)
-
+    for epoch in range(num_epochs):
+        print(f'Epoch {epoch + 1}/{num_epochs}')
+        predictions = []
+        true_values = []
+        train_size = 0
+        val_size = 0
         running_loss = 0.0
         running_corrects = 0
 
         model.train()
 
         for inputs, labels in tqdm(train_loader):
+            train_size += inputs.size(0)
             inputs = inputs.to(device)
             labels = labels.to(device)
-
+            
             optimizer.zero_grad()
 
             with torch.set_grad_enabled(True):
                 outputs = model(inputs)
                 _, preds = torch.max(outputs, 1)
-                #print(preds)
-                #print(labels)
                 loss = loss_func(outputs, labels)
 
                 loss.backward()
@@ -114,22 +116,24 @@ def train():
 
         epoch_loss = running_loss / train_size
         epoch_acc = running_corrects.double() / train_size
-
+        print("Train size: ", train_size)
         print('Train Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
 
         # Validation phase
         running_loss = 0.0
         running_corrects = 0
-
+       
         model.eval()  # set the model to evaluation mode
 
         for inputs, labels in tqdm(valid_loader):
+            val_size += inputs.size(0)
             inputs = inputs.to(device)
             labels = labels.to(device)
-
+            true_values.extend(labels.numpy())
             with torch.set_grad_enabled(False):
                 outputs = model(inputs)
                 _, preds = torch.max(outputs, 1)
+                predictions.extend(preds.numpy())
                 loss = loss_func(outputs, labels)
 
             running_loss += loss.item() * inputs.size(0)
@@ -137,10 +141,21 @@ def train():
 
         epoch_loss = running_loss / val_size
         epoch_acc = running_corrects.double() / val_size
-
+        print("Val size: ", val_size)
         print('Val Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
 
+        # Print confusion matrix
+        cf_matrix = confusion_matrix(true_values, predictions)
 
+        df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix, axis=1)[:, None], index = [i for i in classes],
+                        columns = [i for i in classes])
+        df_cm.to_csv('epoch' + str(epoch + 1) + '.csv')
+        #plt.figure(figsize = (12,7))
+        #sn.heatmap(df_cm, annot=True)
+        #plt.savefig('output.png')
+        #plt.show()
+    
+    torch.save(model, 'efficient_net.pt')
 
 if __name__ == '__main__':
     train()
