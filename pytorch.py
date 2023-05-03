@@ -10,6 +10,13 @@ import torchvision.models as models
 import torch.optim as optim
 import torch.nn as nn
 from tqdm import tqdm
+import splitfolders
+def calculate_accuracy(y_pred, y):
+    top_pred = y_pred.argmax(1, keepdim=True)
+    correct = top_pred.eq(y.view_as(top_pred)).sum()
+    acc = correct.float() / y.shape[0]
+    return acc
+
 ssl._create_default_https_context = ssl._create_unverified_context
 if __name__ == '__main__':
     # Define the device to be used for training
@@ -19,90 +26,54 @@ if __name__ == '__main__':
     transform = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5],
+            std=[0.5, 0.5, 0.5]),
     ])
 
     # Create the dataset
-    dataset = torchvision.datasets.ImageFolder('C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES_HighPassFilter', transform=transform)
-    #print(dataset.targets)
-    train_size = int(0.8 * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    # dataset = torchvision.datasets.ImageFolder('C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES', transform=transform)
+    # #print(dataset.targets)
+   
+    # train_data, test_data, train_labels, test_labels = train_test_split(dataset, labels, test_size=0.2, random_state=42)
+    # train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    input_folder = "C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES"
+    output_folder = "C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES_Split"
+    splitfolders.ratio(input_folder, output_folder, seed=42, ratio=(0.8, 0.2), group_prefix=None)
+    # Create datasets for the training and testing sets
+    train_dataset = torchvision.datasets.ImageFolder(output_folder + '/train', transform=transform)
+    val_dataset = torchvision.datasets.ImageFolder(output_folder + '/val', transform=transform)
+    train_size = len(train_dataset)
+    val_size = len(val_dataset)
     # Create the data loaders for training and validation
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True,num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=True,num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True,num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=128, shuffle=True,num_workers=4)
     # Define the VGG model
 
     model = torchvision.models.vgg16(pretrained=True)
     num_features = model.classifier[0].in_features
     model.classifier = nn.Sequential(
-        nn.Linear(num_features, 2048),
+        nn.Linear(num_features, 4096),
         nn.ReLU(inplace=True),
-        nn.Dropout(),
-        nn.Linear(2048, 2048),
+        nn.Dropout(0.5),
+        nn.Linear(4096, 4096),
         nn.ReLU(inplace=True),
-        nn.Dropout(),
-        nn.Linear(2048, 6)
+        nn.Dropout(0.5),
+        nn.Linear(4096, 205)
     )
-    model.to(device)
+    #   model.to(device)
     # Define the loss function and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.classifier.parameters())
+    START_LR = 1e-7
+    optimizer = optim.Adam(model.parameters(), lr=START_LR)
+    model = model.to(device)
+    criterion = criterion.to(device)
 
-
-    # Train the model
-    # num_epochs = 10
-    # for epoch in range(num_epochs):
-    #     running_loss = 0.0
-    #     for i, (inputs, labels) in tqdm(train_loader):
-    #         inputs, labels = inputs.to(device), labels.to(device)
-
-    #         optimizer.zero_grad()
-
-    #         outputs = model(inputs)
-    #         loss = criterion(outputs, labels)
-    #         loss.backward()
-    #         optimizer.step()
-
-    #         running_loss += loss.item()
-
-    #         if i % 50 == 49:
-    #             print('[%d, %5d] loss: %.3f' %
-    #                 (epoch + 1, i + 1, running_loss / 50))
-    #             running_loss = 0.0
-
-    #     # Compute train and validation accuracies
-    #     correct_train = 0
-    #     total_train = 0
-    #     with torch.no_grad():
-    #         for inputs, labels in tqdm(train_loader):
-    #             inputs, labels = inputs.to(device), labels.to(device)
-    #             outputs = model(inputs)
-    #             _, predicted = torch.max(outputs.data, 1)
-    #             total_train += labels.size(0)
-    #             correct_train += (predicted == labels).sum().item()
-    #     train_accuracy = 100 * correct_train / total_train
-
-    #     correct_valid = 0
-    #     total_valid = 0
-    #     with torch.no_grad():
-    #         for inputs, labels in tqdm(val_loader):
-    #             inputs, labels = inputs.to(device), labels.to(device)
-    #             outputs = model(inputs)
-    #             _, predicted = torch.max(outputs.data, 1)
-    #             total_valid += labels.size(0)
-    #             correct_valid += (predicted == labels).sum().item()
-    #     valid_accuracy = 100 * correct_valid / total_valid
-
-    #     # Print progress
-    #     print('Epoch [%d/%d], Loss: %.4f, Train Accuracy: %.2f%%, Valid Accuracy: %.2f%%'
-    #         % (epoch+1, num_epochs, loss.item(), train_accuracy, valid_accuracy))
         # Train the model
-    for epoch in range(20):
-        print('Epoch {}/{}'.format(epoch + 1, 20))
+    for epoch in range(10):
+        print('Epoch {}/{}'.format(epoch + 1, 10))
         print('-' * 10)
 
-        running_loss = 0.0
+        running_loss = 0
         running_corrects = 0
 
         model.train()
@@ -113,16 +84,14 @@ if __name__ == '__main__':
 
             optimizer.zero_grad()
 
-            with torch.set_grad_enabled(True):
-                outputs = model(inputs)
-                _, preds = torch.max(outputs, 1)
-                #print(preds)
-                #print(labels)
-                loss = criterion(outputs, labels)
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            loss = criterion(outputs, labels)
+            #acc = calculate_accuracy(y_pred, labels)
 
-                loss.backward()
-                optimizer.step()
+            loss.backward()
 
+            optimizer.step()
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
@@ -132,20 +101,22 @@ if __name__ == '__main__':
         print('Train Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
 
         # Validation phase
-        running_loss = 0.0
+        running_loss = 0
         running_corrects = 0
-
         model.eval()  # set the model to evaluation mode
 
         for inputs, labels in tqdm(val_loader):
             inputs = inputs.to(device)
             labels = labels.to(device)
 
-            with torch.set_grad_enabled(False):
-                outputs = model(inputs)
-                _, preds = torch.max(outputs, 1)
-                loss = criterion(outputs, labels)
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            loss = criterion(outputs, labels)
 
+            #acc = calculate_accuracy(preds, labels)
+
+            loss.backward()
+            optimizer.step()
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
@@ -153,4 +124,7 @@ if __name__ == '__main__':
         epoch_acc = running_corrects.double() / val_size
 
         print('Val Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
+
+    # Save the model
+    torch.save(model, 'vgg16_model.pth')
 
