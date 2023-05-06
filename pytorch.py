@@ -100,7 +100,7 @@ if __name__ == '__main__':
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / train_size
-        epoch_acc = running_corrects.double() / val_size
+        epoch_acc = running_corrects.double() / train_size
         report_dict = classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('training-classification-epoch' + str(epoch + 1) + '.csv')
