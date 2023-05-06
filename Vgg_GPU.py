@@ -25,8 +25,8 @@ def calculate_accuracy(y_pred, y):
 ssl._create_default_https_context = ssl._create_unverified_context
 if __name__ == '__main__':
     # Define the device to be used for training
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = 'cuda'
     # Set up the transform to resize and normalize the images
     transform = transforms.Compose([
         transforms.Resize(224),
@@ -34,7 +34,8 @@ if __name__ == '__main__':
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
             std=[0.5, 0.5, 0.5]),
     ])
-
+    batch_size = 10
+    num_classes = 3
     # Create the dataset
     # dataset = torchvision.datasets.ImageFolder('C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES', transform=transform)
     # #print(dataset.targets)
@@ -50,8 +51,8 @@ if __name__ == '__main__':
     train_size = len(train_dataset)
     val_size = len(val_dataset)
     # Create the data loaders for training and validation
-    train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True,num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=128, shuffle=True,num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True,num_workers=4)
     list_of_classes = os.listdir("C:/Users/shiva/Desktop/Spring_2023/237D/PyHa/IMAGES_Split_HighPass/train")
     #print(list_of_classes)
     classes = list(train_dataset.class_to_idx.keys())
@@ -67,7 +68,7 @@ if __name__ == '__main__':
         nn.Linear(4096, 4096),
         nn.ReLU(inplace=True),
         nn.Dropout(0.5),
-        nn.Linear(4096, 3)
+        nn.Linear(4096, num_classes)
     )
     #   model.to(device)
     # Define the loss function and optimizer
@@ -76,10 +77,9 @@ if __name__ == '__main__':
     optimizer = optim.Adam(model.parameters(), lr=START_LR)
     model = model.to(device)
     criterion = criterion.to(device)
-    model.cuda()
+
         # Train the model
     for epoch in range(10):
-        torch.cuda.empty_cache()
         print('Epoch {}/{}'.format(epoch + 1, 10))
         print('-' * 10)
 
@@ -92,11 +92,11 @@ if __name__ == '__main__':
         for inputs, labels in tqdm(train_loader):
             inputs = inputs.to(device)
             labels = labels.to(device)
-            true_labels.extend(labels.numpy())
+            true_labels.extend(labels.cpu().numpy())
             optimizer.zero_grad()
             outputs = model(inputs)
             _, preds = torch.max(outputs, 1)
-            predictions.extend(preds.numpy())
+            predictions.extend(preds.cpu().numpy())
             loss = criterion(outputs, labels)
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
@@ -126,7 +126,10 @@ if __name__ == '__main__':
         # print("precision for all classes in train phase", PPV)
         pd.DataFrame(ACC, columns=['Accuracy']).to_csv('accuracy-train-epoch' + str(epoch + 1) + '.csv')
         print('Train Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
-
+        del outputs
+        del preds
+        del labels
+        torch.cuda.empty_cache()
         # Validation phase
         running_loss = 0
         running_corrects = 0
@@ -136,10 +139,10 @@ if __name__ == '__main__':
         for inputs, labels in tqdm(val_loader):
             inputs = inputs.to(device)
             labels = labels.to(device)
-            true_labels.extend(labels.numpy())
+            true_labels.extend(labels.cpu().numpy())
             outputs = model(inputs)
             _, preds = torch.max(outputs, 1)
-            predictions.extend(preds.numpy())
+            predictions.extend(preds.cpu().numpy())
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -147,7 +150,9 @@ if __name__ == '__main__':
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / val_size
         epoch_acc = running_corrects.double() / val_size
-       
+        del outputs
+        del preds
+        del labels
         #classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
         report_dict = classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
