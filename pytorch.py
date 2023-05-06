@@ -137,8 +137,6 @@ if __name__ == '__main__':
             _, preds = torch.max(outputs, 1)
             predictions.extend(preds.numpy())
             loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / val_size
