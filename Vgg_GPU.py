@@ -35,15 +35,15 @@ if __name__ == '__main__':
             std=[0.5, 0.5, 0.5]),
     ])
     batch_size = 10
-    num_classes = 3
+    num_classes = 264
     # Create the dataset
     # dataset = torchvision.datasets.ImageFolder('C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES', transform=transform)
     # #print(dataset.targets)
    
     # train_data, test_data, train_labels, test_labels = train_test_split(dataset, labels, test_size=0.2, random_state=42)
     # train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-    input_folder = "C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES_HighPassFilter"
-    output_folder = "C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES_Split_HighPass"
+    input_folder = "C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES"
+    output_folder = "C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES_Split"
     #splitfolders.ratio(input_folder, output_folder, seed=42, ratio=(0.8, 0.2), group_prefix=None)
     # Create datasets for the training and testing sets
     train_dataset = torchvision.datasets.ImageFolder(output_folder + '/train', transform=transform)
@@ -51,9 +51,9 @@ if __name__ == '__main__':
     train_size = len(train_dataset)
     val_size = len(val_dataset)
     # Create the data loaders for training and validation
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True,num_workers=4)
-    list_of_classes = os.listdir("C:/Users/shiva/Desktop/Spring_2023/237D/PyHa/IMAGES_Split_HighPass/train")
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,num_workers=2)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True,num_workers=2)
+    list_of_classes = os.listdir("C:/Users/shiva/Desktop/Spring_2023/237D/PyHa/IMAGES_Split/train")
     #print(list_of_classes)
     classes = list(train_dataset.class_to_idx.keys())
     classes.sort()
@@ -98,6 +98,8 @@ if __name__ == '__main__':
             _, preds = torch.max(outputs, 1)
             predictions.extend(preds.cpu().numpy())
             loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / train_size
@@ -144,8 +146,6 @@ if __name__ == '__main__':
             _, preds = torch.max(outputs, 1)
             predictions.extend(preds.cpu().numpy())
             loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / val_size
