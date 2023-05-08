@@ -34,7 +34,7 @@ if __name__ == '__main__':
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
             std=[0.5, 0.5, 0.5]),
     ])
-    batch_size = 10
+    batch_size = 6
     num_classes = 264
     # Create the dataset
     # dataset = torchvision.datasets.ImageFolder('C:\\Users\\shiva\\Desktop\\Spring_2023\\237D\\PyHa\\IMAGES', transform=transform)
@@ -51,8 +51,8 @@ if __name__ == '__main__':
     train_size = len(train_dataset)
     val_size = len(val_dataset)
     # Create the data loaders for training and validation
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,num_workers=2)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True,num_workers=2)
+    train_loader = DataLoader(train_dataset, batch_size=10, shuffle=True,num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=4, shuffle=True,num_workers=4)
     list_of_classes = os.listdir("C:/Users/shiva/Desktop/Spring_2023/237D/PyHa/IMAGES_Split/train")
     #print(list_of_classes)
     classes = list(train_dataset.class_to_idx.keys())
@@ -62,13 +62,13 @@ if __name__ == '__main__':
     model = torchvision.models.vgg16(pretrained=True)
     num_features = model.classifier[0].in_features
     model.classifier = nn.Sequential(
-        nn.Linear(num_features, 4096),
+        nn.Linear(num_features, 2048),
         nn.ReLU(inplace=True),
         nn.Dropout(0.5),
-        nn.Linear(4096, 4096),
+        nn.Linear(2048, 2048),
         nn.ReLU(inplace=True),
         nn.Dropout(0.5),
-        nn.Linear(4096, num_classes)
+        nn.Linear(2048, num_classes)
     )
     #   model.to(device)
     # Define the loss function and optimizer
@@ -131,6 +131,7 @@ if __name__ == '__main__':
         del outputs
         del preds
         del labels
+        del inputs
         torch.cuda.empty_cache()
         # Validation phase
         running_loss = 0
@@ -150,9 +151,6 @@ if __name__ == '__main__':
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / val_size
         epoch_acc = running_corrects.double() / val_size
-        del outputs
-        del preds
-        del labels
         #classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
         report_dict = classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
@@ -179,7 +177,10 @@ if __name__ == '__main__':
         # print("recall for all classes in validation phase", TPR)
         # print("precision for all classes in validation phase", PPV)
         print('Val Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
-
+        del outputs
+        del preds
+        del labels
+        del inputs
     # Save the model
     torch.save(model, 'vgg16_model.pth')
 
