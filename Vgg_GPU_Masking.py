@@ -49,12 +49,12 @@ ytrain = ytrain.reset_index(drop=True)
 xtest = xtest.reset_index(drop=True)
 ytest = ytest.reset_index(drop=True)
 
-l = []
-for index, row in ytest.iterrows():
-    l.append(row['Label'])
-s = set(l)
-actual = [i for i in range(264)]
-target_ids = [x for x in actual if x not in s]
+# l = []
+# for index, row in ytest.iterrows():
+#     l.append(row['Label'])
+# s = set(l)
+# actual = [i for i in range(264)]
+# target_ids = [x for x in actual if x not in s]
 masks = np.arange(20,51)
 augment_choice = [0,1,2]
 f_masks = np.arange(10,31)
@@ -99,15 +99,17 @@ class BirdAudioDataset(Dataset):
         # Assuming `D` and `normalized_sample_rate` are defined
 
         S = librosa.feature.melspectrogram(S=D, sr=normalized_sample_rate, fmax=normalized_sample_rate/2)
-        if str(self.augmentation) == "AUGMENT":
+        if str(self.augmentation[i]) == "AUGMENT":
             choice = random.choice(augment_choice)
             if(choice == 0):
                 S = torchaudio.transforms.TimeMasking(time_mask_param=random.choice(masks))(torch.from_numpy(S).unsqueeze(0))
+                S = S.squeeze(0).numpy()
             elif (choice == 1):
-                S = torchaudio.transforms.FrequencyMasking(time_mask_param=random.choice(f_masks))(torch.from_numpy(S).unsqueeze(0))
+                S = torchaudio.transforms.FrequencyMasking(freq_mask_param=random.choice(f_masks))(torch.from_numpy(S).unsqueeze(0))
+                S = S.squeeze(0).numpy()
             else:
                 S = librosa.effects.time_stretch(S, rate=1.25)
-            S = S.squeeze(0).numpy()
+                
 
         S_dB = librosa.power_to_db(S, ref=np.max)
 
