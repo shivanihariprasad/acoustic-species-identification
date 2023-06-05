@@ -49,4 +49,8 @@ The models we chose were: **VGG16, EfficientNet Model - B0, B3, B7,  Resnet50**.
 **Gaussian Noise:** Adding Gaussian noise to the melspectrogram images introduced random variations that mimic real-world recording conditions. By doing so, we aimed to improve the model's resilience to noise and enhance its ability to generalize well in the presence of unexpected acoustic variations. We achieved a validation accuracy of 85.59%.
 
 
+## Kaggle Final Results
+
+![Flow Diagram](images/results.png)
+
 
