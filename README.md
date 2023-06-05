@@ -9,7 +9,7 @@ The proposed end product of this project is a robust and efficient multi-species
 
 ## Data Set:
 
-The train data contains 264 species from Kenya, Africa, and the test set consists of 191 10-minute soundscapes. Xeno-canto provided 16,900 audio recordings which can be used to train a classifier. This data is part of the [BirdClef]{} 2023 Kaggle competition.
+The train data contains 264 species from Kenya, Africa, and the test set consists of 191 10-minute soundscapes. Xeno-canto provided 16,900 audio recordings which can be used to train a classifier. This data is part of the [BirdClef](https://www.kaggle.com/competitions/birdclef-2023/data) 2023 Kaggle competition.
 
 ## Methodology 
 
