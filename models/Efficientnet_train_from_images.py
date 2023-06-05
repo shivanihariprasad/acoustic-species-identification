@@ -2,7 +2,6 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
-#from efficientnet_pytorch import EfficientNet
 import torchvision.models as models
 from tqdm import tqdm
 import torch.nn as nn
@@ -12,7 +11,6 @@ import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
 
-#model = EfficientNet.from_name('efficientnet-b1', num_classes=29)
 model = models.efficientnet_b0(pretrained=True)
 device = 'cpu'
 batch_size = 100
@@ -23,7 +21,6 @@ def train():
     # the training transforms
     train_transform = transforms.Compose([
         transforms.Resize((224, 224)),
-        #transforms.GaussianBlur(kernel_size=(5, 9), sigma=(0.1, 5)),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.5, 0.5, 0.5],
@@ -41,23 +38,16 @@ def train():
         )
     ])
     
+    # Use path of images to be used for training and validation
     train_dataset = torchvision.datasets.ImageFolder(root='SPLITIMAGES/train', transform=train_transform)
     valid_dataset = torchvision.datasets.ImageFolder(root='SPLITIMAGES/val', transform=valid_transform)
-    #print("Train dataset\n", train_dataset.class_to_idx)
-    #print("Valid dataset\n", valid_dataset.class_to_idx)
+
     classes = list(train_dataset.class_to_idx.keys())
     classes.sort()
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
     valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     data_dir = "./IMAGES/"
-    #image_datasets = torchvision.datasets.ImageFolder(data_dir, train_transform)
-    #train_size = int(0.8 * len(image_datasets))
-    #val_size = len(image_datasets) - train_size
-    #train_dataset, val_dataset = torch.utils.data.random_split(image_datasets, [train_size, val_size])
-
-    #train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=25, shuffle=True, num_workers=7)
-    #valid_loader = torch.utils.data.DataLoader(val_dataset, batch_size=25, shuffle=False, num_workers=1)
 
     # Unfreeze model weights
     for param in model.parameters():
@@ -74,13 +64,6 @@ def train():
         nn.Linear(2048, num_classes)
     )
 
-
-
-    #num_ftrs = model._fc.in_features
-    #num_ftrs = model.fc.in_features
-    #model._fc = nn.Linear(num_ftrs, 29)
-
-    #optimizer = optim.Adam(model.parameters())
     optimizer = optim.Adam(model.classifier.parameters())
     loss_func = nn.CrossEntropyLoss()
 
@@ -150,10 +133,6 @@ def train():
         df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix, axis=1)[:, None], index = [i for i in classes],
                         columns = [i for i in classes])
         df_cm.to_csv('epoch' + str(epoch + 1) + '.csv')
-        #plt.figure(figsize = (12,7))
-        #sn.heatmap(df_cm, annot=True)
-        #plt.savefig('output.png')
-        #plt.show()
     
     torch.save(model, 'efficient_net.pt')
 
