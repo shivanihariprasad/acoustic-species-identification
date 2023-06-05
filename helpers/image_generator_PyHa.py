@@ -8,6 +8,7 @@ import librosa.display
 import numpy as np
 import scipy.signal as scipy_signal
 import matplotlib.pyplot as plt
+
 isolation_parameters = {
     "model" : "tweetynet",
     "tweety_output": True,
@@ -23,7 +24,7 @@ test_path = "./TEST/"
 path_folders = os.listdir(test_path)
 completed_path = "./IMAGES_HighPassFilter/"
 completed_path_folders = os.listdir(completed_path)
-#print(path_folders)
+
 for folder in path_folders:
     if folder in completed_path_folders:
         print("Skipping ", folder)

@@ -13,6 +13,8 @@ from torchvision.transforms import transforms
 import noisereduce as nr
 
 normalized_sample_rate=44100
+
+# Path to audio
 path="./kaggletest/abethr1/XC128013.ogg"
 
 try:
@@ -41,15 +43,15 @@ SIGNAL = nr.reduce_noise(y=SIGNAL, sr=normalized_sample_rate, use_tqdm=False)
 D = np.abs(librosa.stft(SIGNAL))**2
 # Assuming `D` and `normalized_sample_rate` are defined
 S = librosa.feature.melspectrogram(S=D, sr=normalized_sample_rate, fmax=normalized_sample_rate/2)
+
+#Time stretching
 time_stretched_signal = librosa.effects.time_stretch(S, rate=1.25)
 
 # Apply time and frequency masking
 time_masked = torchaudio.transforms.TimeMasking(time_mask_param=50)(torch.from_numpy(time_stretched_signal).unsqueeze(0))
 frequency_masked = torchaudio.transforms.FrequencyMasking(freq_mask_param=30)(time_masked)
-#frequency_masked = torchaudio.transforms.FrequencyMasking(freq_mask_param=30)(torch.from_numpy(S).unsqueeze(0))
 
 S_dB = librosa.power_to_db(frequency_masked.squeeze(0).numpy(), ref=np.max)
-#S_dB = librosa.power_to_db(S, ref=np.max)
 
 # Scale the spectrogram to the range [0, 255]
 S_scaled = (S_dB - np.min(S_dB)) / (np.max(S_dB) - np.min(S_dB)) * 255
@@ -68,7 +70,6 @@ transform = transforms.Compose([
             std=[0.5, 0.5, 0.5]),
 ])
 img_tensor = transform(pil_image)
-
 
 # Show the image
 pil_image.save('melspec'+str(4)+'.png')

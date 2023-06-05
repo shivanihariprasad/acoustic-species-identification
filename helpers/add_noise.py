@@ -5,6 +5,9 @@ import os
 
 path = "./kaggletest/"
 
+# Some of the files in these folders failed with PyHa
+# On debugging we found out that if audio chunks are very small, PyHa fails.
+# For audio chunks < 5 secs, we add noise to make it a chunk of 5 sec
 folders = ['carwoo1/', 'gargan/','rerswa1/', 'eaywag1/', 'thrnig1/', 'cibwar1/', 'lessts1/', 'purgre2/', 'spfbar1/',
          'gobbun1/', 'varsun2/', 'piekin1/', 'piecro1/', 'hoopoe/', 'blfbus1/', 'gyhneg1/', 'grecor/', 'beasun2/' ,
          'greegr/', 'cabgre1/', 'eubeat1/', 'yertin1/', 'categr/', 'combuz1/', 'witswa1/', 'libeat1/', 'rebfir2/',
@@ -42,8 +45,3 @@ for f in folders:
     for item in modified_files:
         print("Removing file", path + f + item)
         os.remove(path + f + item)
-
-##signal = np.pad(signal, (0, total_len - signal.shape[0]), 'constant')
-#signal_noise = np.concatenate((signal,noise[:total_len-signal.shape[0]]), axis=None)
-
-

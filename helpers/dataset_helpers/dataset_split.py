@@ -1,3 +1,6 @@
+'''
+    Code to split dataset into train and validation such that if audio is present in train, it is not included in validation set
+'''
 import pandas as pd
 import math 
 import random
