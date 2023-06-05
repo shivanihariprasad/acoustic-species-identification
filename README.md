@@ -54,3 +54,8 @@ The models we chose were: **VGG16, EfficientNet Model - B0, B3, B7,  Resnet50**.
 ![Flow Diagram](images/results.png)
 
 
+## Future Roadmap
+
+1. Ensemble of multiple models to predict the bird
+2. Pretrain the model with bird  audio dataset from different regions and finetune for our use case
+3. Train a multilabel model to identify multiple bird species present in the audio
