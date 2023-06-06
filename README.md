@@ -26,7 +26,7 @@ This package is being developed and maintained by the [Engineers for Exploration
 
 **Step 3:** To initiate our analysis, we adopted a random selection process to choose 30 classes from the available data. The purpose of this selection was to generate melspectrogram images for the corresponding data frames derived from the PyHa output. By selecting a diverse set of 30 classes, we aimed to obtain a representative sample of the dataset, encompassing various bird species and vocalizations.The rationale behind choosing 30 classes was to facilitate a comparative evaluation of different models. By utilizing the melspectrogram images, we could assess the performance of these models using a range of metrics. The goal was to identify and select the models that exhibited the highest performance across these metrics. By comparing the models based on various evaluation criteria, such as accuracy, precision, recall, F1 score, or any other relevant metrics, we aimed to gain insights into the strengths and weaknesses of each model. 
 
-The models we chose were: **VGG16, EfficientNet Model - B0, B3, B7,  Resnet50**.
+The models we chose were: **VGG16, EfficientNet Model - B0, B3, B7,  Resnet50** from PyTorch library.
 
 **VGG16**: The validation accuracy achieved on the 30 classes was 89.06%. The macro average precision was determined to be 78.2%.
 
