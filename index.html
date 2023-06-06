@@ -35,7 +35,7 @@
 
     <p>Our team's MVP was to design and implement a solution for analyzing audio data to identify different bird species based on their distinct calls. By utilizing machine learning techniques, we aim to create a powerful model that can accurately recognize and predict the species of birds present in the audio recordings. We successfully accomplished this.</p>
 
-    <p>The proposed end product of this project is a robust and efficient multi-species classifier that can seamlessly process audio data and identify the bird species present in the recordings. Our solution will use melspectogram to represent features from the audio data, which will then be used to train the machine learning model.</p>
+    <p>The proposed end product of this project is a robust and efficient multi-species classifier that can seamlessly process audio data and identify the bird species present in the recordings. Our solution will use melspectogram to represent features from the audio data, which will then be used to train the machine learning model. Our work is available in <a href="https://github.com/shivanihariprasad/acoustic-species-identification">this repository</a>, where you can view our project.</p>
 
     <h5><b>Data Set:</b></h5>
     <p>The train data contains 264 species from Kenya, Africa, and the test set consists of 191 10-minute soundscapes. Xeno-canto provided 16,900 audio recordings which can be used to train a classifier. This data is part of the <a href="https://www.kaggle.com/competitions/birdclef-2023">BirdClef</a> 2023 Kaggle competition.</p>
@@ -44,14 +44,11 @@
 
     <p>This package is being developed and maintained by the Engineers for Exploration Acoustic Species Identification Team in collaboration with the San Diego Zoo Wildlife Alliance.</p>
 
-    <b>Step 1:</b>
-    <p>Audio data is sent to PyHA, a platform capable of processing audio signals, in order to obtain a set of 5-second audio segments. These segments will be analyzed to determine the presence or absence of bird sounds, and data frames will be generated.</p>
-
-    <b>Step 2:</b>
-    <p>To visualize and analyze this data, we utilized the librosa library, which offers a range of audio processing functionalities. In particular, we employed librosa to generate melspectrograms for the data frames.</p>
-
-    <b>Step 3:</b>
-    <p>To initiate our analysis, we adopted a random selection process to choose 30 classes from the available data. The purpose of this selection was to generate melspectrogram images for the corresponding data frames derived from the PyHa output. By selecting a diverse set of 30 classes, we aimed to obtain a representative sample of the dataset, encompassing various bird species and vocalizations.</p>
+    <b>Step 1:</b> Audio data is sent to PyHA, a platform capable of processing audio signals, in order to obtain a set of 5-second audio segments. These segments will be analyzed to determine the presence or absence of bird sounds, and data frames will be generated.
+    <br><br>
+    <b>Step 2:</b> To visualize and analyze this data, we utilized the librosa library, which offers a range of audio processing functionalities. In particular, we employed librosa to generate melspectrograms for the data frames.
+    <br><br>
+    <b>Step 3:</b> To initiate our analysis, we adopted a random selection process to choose 30 classes from the available data. The purpose of this selection was to generate melspectrogram images for the corresponding data frames derived from the PyHa output. By selecting a diverse set of 30 classes, we aimed to obtain a representative sample of the dataset, encompassing various bird species and vocalizations.
 
     <p>The models we chose were: VGG16, EfficientNet Model - B0, B3, B7, Resnet50.</p>
 
