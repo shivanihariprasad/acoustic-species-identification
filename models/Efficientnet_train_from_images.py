@@ -11,6 +11,7 @@ import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
 
+# load the pretrained model
 model = models.efficientnet_b0(pretrained=True)
 device = 'cpu'
 batch_size = 100
@@ -42,12 +43,13 @@ def train():
     train_dataset = torchvision.datasets.ImageFolder(root='SPLITIMAGES/train', transform=train_transform)
     valid_dataset = torchvision.datasets.ImageFolder(root='SPLITIMAGES/val', transform=valid_transform)
 
+    # class names
     classes = list(train_dataset.class_to_idx.keys())
     classes.sort()
+
+    # Train and validation loader
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
     valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-
-    data_dir = "./IMAGES/"
 
     # Unfreeze model weights
     for param in model.parameters():
@@ -64,6 +66,7 @@ def train():
         nn.Linear(2048, num_classes)
     )
 
+    # Define optimiser and loss function
     optimizer = optim.Adam(model.classifier.parameters())
     loss_func = nn.CrossEntropyLoss()
 
@@ -127,13 +130,13 @@ def train():
         print("Val size: ", val_size)
         print('Val Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
 
-        # Print confusion matrix
+        # Generate confusion matrix
         cf_matrix = confusion_matrix(true_values, predictions)
-
         df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix, axis=1)[:, None], index = [i for i in classes],
                         columns = [i for i in classes])
         df_cm.to_csv('epoch' + str(epoch + 1) + '.csv')
     
+    # Save model
     torch.save(model, 'efficient_net.pt')
 
 if __name__ == '__main__':

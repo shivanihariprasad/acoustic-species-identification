@@ -56,8 +56,9 @@ if __name__ == '__main__':
     #print(list_of_classes)
     classes = list(train_dataset.class_to_idx.keys())
     classes.sort()
-    # Define the VGG model
 
+    # Define the VGG model
+    # load the pretrained model
     model = torchvision.models.vgg16(pretrained=True)
     num_features = model.classifier[0].in_features
     model.classifier = nn.Sequential(
@@ -69,7 +70,7 @@ if __name__ == '__main__':
         nn.Dropout(0.5),
         nn.Linear(2048, num_classes)
     )
-    #   model.to(device)
+
     # Define the loss function and optimizer
     criterion = nn.CrossEntropyLoss()
     START_LR = 0.0001
@@ -77,7 +78,7 @@ if __name__ == '__main__':
     model = model.to(device)
     criterion = criterion.to(device)
 
-        # Train the model
+    # Train the model
     for epoch in range(10):
         print('Epoch {}/{}'.format(epoch + 1, 10))
         print('-' * 10)
@@ -103,19 +104,26 @@ if __name__ == '__main__':
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / train_size
         epoch_acc = running_corrects.double() / train_size
+
+        # Generate classification report
         report_dict = classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('training-classification-epoch' + str(epoch + 1) + '.csv')
+
+        # Generate confusion matrix
         cnf_matrix = confusion_matrix(true_labels, predictions)
         df_cm = pd.DataFrame(cnf_matrix / np.sum(cnf_matrix, axis=1)[:, None], index = [i for i in classes],
                         columns = [i for i in classes])
         df_cm.to_csv('confusion-matrix-train-epoch' + str(epoch + 1) + '.csv')
         print('Train Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
+
+        # Delete data to clear GPU memory
         del outputs
         del preds
         del labels
         del inputs
         torch.cuda.empty_cache()
+
         # Validation phase
         running_loss = 0
         running_corrects = 0
@@ -134,16 +142,20 @@ if __name__ == '__main__':
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / val_size
         epoch_acc = running_corrects.double() / val_size
-        #classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
+
+        # Generate classification report
         report_dict = classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('val-classification-epoch' + str(epoch + 1) + '.csv')
-        #matrix = confusion_matrix(true_labels, predictions)
+
+        # Generate confusion matrix
         cnf_matrix = confusion_matrix(true_labels, predictions)
         df_cm = pd.DataFrame(cnf_matrix / np.sum(cnf_matrix, axis=1)[:, None], index = [i for i in classes],
                         columns = [i for i in classes])
         df_cm.to_csv('confusion-matrix-val-epoch' + str(epoch + 1) + '.csv')
         print('Val Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
+
+        # Delete data to clear GPU memory
         del outputs
         del preds
         del labels

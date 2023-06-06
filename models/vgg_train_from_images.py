@@ -54,8 +54,9 @@ if __name__ == '__main__':
 
     classes = list(train_dataset.class_to_idx.keys())
     classes.sort()
-    # Define the VGG model
 
+    # Define the VGG model
+    # load the pretrained model
     model = torchvision.models.vgg16(pretrained=True)
     num_features = model.classifier[0].in_features
     model.classifier = nn.Sequential(
@@ -103,9 +104,13 @@ if __name__ == '__main__':
 
         epoch_loss = running_loss / train_size
         epoch_acc = running_corrects.double() / train_size
+
+        # Generate classification report
         report_dict = classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('training-classification-epoch' + str(epoch + 1) + '.csv')
+
+        # Generate confusion matrix
         cnf_matrix = confusion_matrix(true_labels, predictions)
         df_cm = pd.DataFrame(cnf_matrix / np.sum(cnf_matrix, axis=1)[:, None], index = [i for i in classes],
                         columns = [i for i in classes])
@@ -131,9 +136,12 @@ if __name__ == '__main__':
         epoch_loss = running_loss / val_size
         epoch_acc = running_corrects.double() / val_size
        
+        # Generate classification report
         report_dict = classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('val-classification-epoch' + str(epoch + 1) + '.csv')
+
+        # Generate confusion matrix
         cnf_matrix = confusion_matrix(true_labels, predictions)
         df_cm = pd.DataFrame(cnf_matrix / np.sum(cnf_matrix, axis=1)[:, None], index = [i for i in classes],
                         columns = [i for i in classes])

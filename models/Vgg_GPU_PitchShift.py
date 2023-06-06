@@ -128,6 +128,7 @@ train_data = BirdAudioDataset(xtrain, ytrain, tfms=1)
 test_data = BirdAudioDataset(xtest, ytest, tfms=0)
 
 def train():
+    # load the pretrained model
     model = torchvision.models.vgg16(pretrained=True)
     train_loader = DataLoader(train_data, batch_size=10, shuffle=True, num_workers=4)
     val_loader = DataLoader(test_data, batch_size=5, shuffle=True, num_workers=4)
@@ -176,14 +177,20 @@ def train():
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / train_size
         epoch_acc = running_corrects.double() / train_size
+
+        # Generate classification report
         report_dict = classification_report(true_labels, predictions, target_names=classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('training-classification-epoch' + str(epoch + 1) + '.csv')
+
+        # Generate confusion matrix
         cnf_matrix = confusion_matrix(true_labels, predictions)
         df_cm = pd.DataFrame(cnf_matrix / np.sum(cnf_matrix, axis=1)[:, None], index = [i for i in classes],
                         columns = [i for i in classes])
         df_cm.to_csv('confusion-matrix-train-epoch' + str(epoch + 1) + '.csv')
         print('Train Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
+
+        # Delete data to clear GPU memory
         del outputs
         del preds
         del labels
@@ -211,16 +218,20 @@ def train():
             running_corrects += torch.sum(preds == labels.data)
         epoch_loss = running_loss / val_size
         epoch_acc = running_corrects.double() / val_size
-        #classification_report(true_labels, predictions, target_names=list_of_classes,output_dict=True)
+
+        # Generate classification report
         report_dict = classification_report(true_labels, predictions, target_names=classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('val-classification-epoch' + str(epoch + 1) + '.csv')
-        #matrix = confusion_matrix(true_labels, predictions)
+
+        # Generate confusion matrix
         cnf_matrix = confusion_matrix(true_labels, predictions)
         df_cm = pd.DataFrame(cnf_matrix / np.sum(cnf_matrix, axis=1)[:, None], index = [i for i in classes],
                         columns = [i for i in classes])
         df_cm.to_csv('confusion-matrix-val-epoch' + str(epoch + 1) + '.csv')
         print('Val Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
+
+        # Delete data to clear GPU memory
         del outputs
         del preds
         del labels
