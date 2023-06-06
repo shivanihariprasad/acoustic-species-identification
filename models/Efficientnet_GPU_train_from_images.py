@@ -12,6 +12,7 @@ import seaborn as sn
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 
+# load the pretrained model
 model = models.efficientnet_b7(weights=models.efficientnet.EfficientNet_B7_Weights.DEFAULT)
 device = 'cuda'
 batch_size = 50
@@ -45,9 +46,11 @@ def train():
     train_dataset = torchvision.datasets.ImageFolder(root='SPLITIMAGES/train', transform=train_transform)
     valid_dataset = torchvision.datasets.ImageFolder(root='SPLITIMAGES/val', transform=valid_transform)
 
+    # Get class names
     classes = list(train_dataset.class_to_idx.keys())
     classes.sort()
 
+    # Create train and validation loader
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
     valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset, batch_size=test_batch_size, shuffle=True, num_workers=4)
 
@@ -57,7 +60,6 @@ def train():
         param.requires_grad = True
 
     num_inputs = model.classifier[1].in_features
-    #print("Num inputs:", num_inputs)
     model.classifier = nn.Sequential(
         nn.Linear(num_inputs, 2048),
         nn.SiLU(), # Sigmoid Weighted Linear Unit
@@ -67,7 +69,7 @@ def train():
         nn.Linear(2048, num_classes)
     )
 
-
+    # Optimizer and loss function
     optimizer = optim.Adam(model.classifier.parameters(), lr=START_LR)
     loss_func = nn.CrossEntropyLoss()
     model.cuda()
@@ -104,12 +106,15 @@ def train():
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
+            # Delete data to clear GPU memory
             del outputs
             del preds
             del labels
 
         epoch_loss = running_loss / train_size
         epoch_acc = running_corrects.double() / train_size
+
+        # Generate classification report
         report_dict = classification_report(true_values, predictions, target_names=classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('training-classification-epoch' + str(epoch + 1) + '.csv')
@@ -142,6 +147,7 @@ def train():
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
+            # Delete data to clear GPU memory
             del outputs
             del preds
             del labels
@@ -151,6 +157,7 @@ def train():
         print("Val size: ", val_size)
         print('Val Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
        
+        # Generate classification report
         report_dict = classification_report(true_values, predictions, target_names=classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('val-classification-epoch' + str(epoch + 1) + '.csv')

@@ -22,6 +22,7 @@ data_transforms = transforms.Compose([
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
 
+# Path to folder containing spectogram images
 data_dir = './drive/MyDrive/IMAGES2/'
 
 image_datasets = datasets.ImageFolder(data_dir, data_transforms)
@@ -35,6 +36,7 @@ val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=25, shuffle=Fal
 num_classes = len((torch.tensor(image_datasets.targets)))
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+# load the pretrained model
 base_model = models.resnet50(pretrained=True)
 num_ftrs = base_model.fc.in_features
 base_model.fc = nn.Identity()

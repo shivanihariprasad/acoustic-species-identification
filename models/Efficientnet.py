@@ -50,7 +50,7 @@ ytrain = ytrain.reset_index(drop=True)
 xtest = xtest.reset_index(drop=True)
 ytest = ytest.reset_index(drop=True)
 
-
+# CSV file downloaded from Kaggle contest
 metadata_file =  './birdclef-2023/train_metadata.csv'
 df = pd.read_csv(metadata_file)
 df['relative_path'] = 'train_audio/' + df['filename'].astype(str)
@@ -77,22 +77,7 @@ def padded_cmap(solution, submission, padding_factor=5):
     )
     return score
 
-def mono_to_color(X, eps=1e-6, mean=None, std=None):
-        mean = mean or X.mean()
-        std = std or X.std()
-        X = (X - mean) / (std + eps)
-        
-        _min, _max = X.min(), X.max()
-
-        if (_max - _min) > eps:
-            V = np.clip(X, _min, _max)
-            V = 255 * (V - _min) / (_max - _min)
-            V = V.astype(np.uint8)
-        else:
-            V = np.zeros_like(X, dtype=np.uint8)
-
-        return V
-
+# Custom dataset class
 class BirdAudioDataset(Dataset):
     def __init__(self, info, labels, tfms=None):
         self.folder = info['FOLDER']
@@ -118,7 +103,8 @@ class BirdAudioDataset(Dataset):
 
 train_data = BirdAudioDataset(xtrain, ytrain, tfms=1)
 test_data = BirdAudioDataset(xtest, ytest, tfms=0)
- 
+
+# load the pretrained model
 model = models.efficientnet_b0(weights=models.efficientnet.EfficientNet_B0_Weights.DEFAULT)
 num_classes = 264
 
@@ -132,7 +118,7 @@ def train():
         param.requires_grad = False
     
     num_inputs = model.classifier[1].in_features
-    #print("Num inputs:", num_inputs)
+
     model.classifier = nn.Sequential(
         nn.Linear(num_inputs, 2048),
         nn.SiLU(), # Sigmoid Weighted Linear Unit
@@ -159,7 +145,6 @@ def train():
         model.train()
         for inputs, labels in tqdm(train_loader):
             train_size += inputs.size(0)
-            #print("Input size: ---->", inputs.size())
             inputs = inputs.to(device)
             labels = labels.to(device)
             true_values.extend(labels.numpy())
@@ -175,7 +160,6 @@ def train():
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
-            #output_val = outputs.sigmoid().detach().numpy()
         target_one_hot = torch.eye(264)[true_values]
         target_val = target_one_hot.numpy()
 
@@ -192,11 +176,13 @@ def train():
         epoch_acc = running_corrects.double() / train_size
         print("Train size: ", train_size)
         print('Train Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
+
+        # Generate classification report
         report_dict = classification_report(true_values, predictions, target_names=classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('./opensoundscape/train-classification-epoch' + str(epoch + 1) + '.csv')
 
-        # Print confusion matrix
+        # Generate confusion matrix
         cf_matrix = confusion_matrix(true_values, predictions)
 
         df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix, axis=1)[:, None], index = [i for i in classes],
@@ -229,17 +215,20 @@ def train():
         print("Val size: ", val_size)
         print('Val Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))
         print("True values and predictions length: ", len(set(true_values)), len(set(predictions)))
+
+        # Generate classification report
         report_dict = classification_report(true_values, predictions, target_names=classes,output_dict=True)
         report_pd = pd.DataFrame(report_dict)
         report_pd.to_csv('./opensoundscape/val-classification-epoch' + str(epoch + 1) + '.csv')
 
-        # Print confusion matrix
+        # Generate confusion matrix
         cf_matrix = confusion_matrix(true_values, predictions)
         print("Validation mconfusion matrix shape:", cf_matrix.shape)
         df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix, axis=1)[:, None], index = [i for i in classes],
                         columns = [i for i in classes])
         df_cm.to_csv('./opensoundscape/val-epoch' + str(epoch + 1) + '.csv')
 
+    # Save model
     torch.save(model, 'efficientnet_b0_264_spectogram.pt')
 
 if __name__ == '__main__':
